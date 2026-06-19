@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -119,6 +119,19 @@
     transition:transform .32s var(--ease), opacity .22s var(--ease);
   }
   .day-modal.show{opacity:1; pointer-events:auto; transform:translate(-50%,-50%) scale(1);}
+  .sheet-handle{display:none;}
+  @media (max-width:680px){
+    .day-modal{
+      top:auto; left:0; right:0; bottom:0; width:100%; max-width:100%;
+      max-height:86vh; max-height:86dvh;
+      border-radius:20px 20px 0 0;
+      transform:translateY(100%); opacity:1;
+      padding:12px 20px 28px;
+      transition:transform .3s var(--ease);
+    }
+    .day-modal.show{transform:translateY(0);}
+    .sheet-handle{display:block; width:36px; height:4px; border-radius:999px; background:var(--line); margin:0 auto 14px;}
+  }
   .day-panel-head{display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:16px;}
   .day-panel-title{font-family:var(--font-display); font-size:19px; font-weight:600;}
   .day-panel-sub{font-family:var(--font-mono); font-size:11.5px; color:var(--ink-soft); margin-top:2px;}
@@ -220,7 +233,7 @@
 
 <div id="loadingScreen">
   <div class="ld-word">Daybook</div>
-  <div class="ld-sub" id="loadingMsg">opening your notebook</div>
+  <div class="ld-sub" id="loadingMsg">открываем ваш блокнот</div>
 </div>
 
 <div id="app" style="display:none;">
@@ -228,13 +241,13 @@
   <div class="topbar">
     <div class="brand">Daybook<span class="brand-dot">.</span></div>
     <nav class="tabs">
-      <button class="tab active" data-view="calendar">Calendar</button>
-      <button class="tab" data-view="notes">Notes</button>
-      <button class="tab" data-view="reminders">Reminders</button>
+      <button class="tab active" data-view="calendar">Календарь</button>
+      <button class="tab" data-view="notes">Заметки</button>
+      <button class="tab" data-view="reminders">Напоминания</button>
     </nav>
     <div class="topbar-spacer"></div>
     <div class="today-pill" id="topToday">—</div>
-    <button class="reset-link" id="resetBtn">Reset data</button>
+    <button class="reset-link" id="resetBtn">Сбросить данные</button>
   </div>
 
   <main class="main">
@@ -242,45 +255,45 @@
     <!-- CALENDAR VIEW -->
     <section class="view active" id="view-calendar">
       <div class="view-header">
-        <div class="view-title">Calendar</div>
+        <div class="view-title">Календарь</div>
         <div class="cal-nav">
           <button class="icon-btn" id="prevMonth">‹</button>
           <div class="cal-month-label" id="monthLabel">—</div>
           <button class="icon-btn" id="nextMonth">›</button>
-          <button class="btn-outline" id="todayBtn">Today</button>
+          <button class="btn-outline" id="todayBtn">Сегодня</button>
         </div>
       </div>
 
       <div class="glance-row">
         <span id="glanceDate">—</span>
         <span class="glance-sep">·</span>
-        <span id="glanceNotes">0 notes today</span>
+        <span id="glanceNotes">0 заметок сегодня</span>
         <span class="glance-sep">·</span>
-        <span id="glanceRem">0 due today</span>
-        <button class="link-btn" id="openTodayBtn">Open today →</button>
+        <span id="glanceRem">0 напоминаний сегодня</span>
+        <button class="link-btn" id="openTodayBtn">Открыть сегодня →</button>
       </div>
 
-      <div class="cal-weekdays"><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div><div>SUN</div></div>
+      <div class="cal-weekdays"><div>ПН</div><div>ВТ</div><div>СР</div><div>ЧТ</div><div>ПТ</div><div>СБ</div><div>ВС</div></div>
       <div class="cal-grid" id="calGrid"></div>
     </section>
 
     <!-- NOTES VIEW -->
     <section class="view" id="view-notes">
       <div class="view-header">
-        <div class="view-title">Notes</div>
+        <div class="view-title">Заметки</div>
         <div class="view-actions">
-          <input class="search-input" id="noteSearch" type="text" placeholder="Search notes">
-          <button class="btn" id="newNoteBtn">+ New note</button>
+          <input class="search-input" id="noteSearch" type="text" placeholder="Поиск заметок">
+          <button class="btn" id="newNoteBtn">+ Новая заметка</button>
         </div>
       </div>
 
       <div class="editor-card" id="noteEditor" style="display:none;">
-        <input type="text" id="noteTitleInput" placeholder="Title">
-        <textarea id="noteBodyInput" placeholder="Write what is on your mind"></textarea>
-        <input type="text" id="noteTagsInput" placeholder="Tags, comma separated (optional)">
+        <input type="text" id="noteTitleInput" placeholder="Заголовок">
+        <textarea id="noteBodyInput" placeholder="Запишите, что у вас на уме"></textarea>
+        <input type="text" id="noteTagsInput" placeholder="Теги через запятую (необязательно)">
         <div class="editor-row">
-          <button class="btn-outline" id="noteCancelBtn">Cancel</button>
-          <button class="btn" id="noteSaveBtn">Save note</button>
+          <button class="btn-outline" id="noteCancelBtn">Отмена</button>
+          <button class="btn" id="noteSaveBtn">Сохранить заметку</button>
         </div>
       </div>
 
@@ -290,33 +303,33 @@
     <!-- REMINDERS VIEW -->
     <section class="view" id="view-reminders">
       <div class="view-header">
-        <div class="view-title">Reminders</div>
+        <div class="view-title">Напоминания</div>
         <div class="view-actions">
           <span class="alert-status" id="alertStatus"></span>
-          <button class="btn" id="newRemBtn">+ Add reminder</button>
+          <button class="btn" id="newRemBtn">+ Добавить напоминание</button>
         </div>
       </div>
 
       <div class="new-rem-card" id="newRemCard">
         <div class="form-grid">
-          <div class="form-field"><label>Title</label><input type="text" id="remTitle" placeholder="What do you need to do?"></div>
-          <div class="form-field"><label>Date</label><input type="date" id="remDate"></div>
-          <div class="form-field"><label>Time</label><input type="time" id="remTime" value="09:00"></div>
+          <div class="form-field"><label>Название</label><input type="text" id="remTitle" placeholder="Что нужно сделать?"></div>
+          <div class="form-field"><label>Дата</label><input type="date" id="remDate"></div>
+          <div class="form-field"><label>Время</label><input type="time" id="remTime" value="09:00"></div>
         </div>
         <div class="form-grid-2">
           <div class="form-field">
-            <label>Priority</label>
-            <select id="remPriority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select>
+            <label>Приоритет</label>
+            <select id="remPriority"><option value="low">Низкий</option><option value="medium" selected>Средний</option><option value="high">Высокий</option></select>
           </div>
           <div class="form-field">
-            <label>Repeat</label>
-            <select id="remRepeat"><option value="none" selected>Does not repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select>
+            <label>Повтор</label>
+            <select id="remRepeat"><option value="none" selected>Без повтора</option><option value="daily">Каждый день</option><option value="weekly">Каждую неделю</option><option value="monthly">Каждый месяц</option></select>
           </div>
         </div>
-        <div class="form-field" style="margin-bottom:10px;"><label>Notes (optional)</label><textarea id="remNotes" style="min-height:60px;"></textarea></div>
+        <div class="form-field" style="margin-bottom:10px;"><label>Заметка (необязательно)</label><textarea id="remNotes" style="min-height:60px;"></textarea></div>
         <div class="editor-row">
-          <button class="btn-outline" id="remCancelBtn">Cancel</button>
-          <button class="btn" id="remSaveBtn">Save reminder</button>
+          <button class="btn-outline" id="remCancelBtn">Отмена</button>
+          <button class="btn" id="remSaveBtn">Сохранить напоминание</button>
         </div>
       </div>
 
@@ -328,6 +341,7 @@
 
 <div class="overlay" id="overlay"></div>
 <div class="day-modal" id="dayPanel">
+  <div class="sheet-handle"></div>
   <div class="day-panel-head">
     <div>
       <div class="day-panel-title" id="dpTitle">—</div>
@@ -336,14 +350,14 @@
     <button class="icon-btn" id="dpClose">✕</button>
   </div>
 
-  <div class="day-section-label">Notes for this day</div>
+  <div class="day-section-label">Заметки на этот день</div>
   <div id="dpNotes"></div>
   <div class="day-add-row">
-    <input type="text" id="dpNoteInput" placeholder="Add a note for this day">
-    <button class="btn" id="dpNoteAdd">Add</button>
+    <input type="text" id="dpNoteInput" placeholder="Добавить заметку">
+    <button class="btn" id="dpNoteAdd">Добавить</button>
   </div>
 
-  <div class="day-section-label">Reminders due</div>
+  <div class="day-section-label">Напоминания на этот день</div>
   <div id="dpRem"></div>
 </div>
 
@@ -369,7 +383,7 @@
       localStorage.setItem(key, JSON.stringify(value));
     }catch(e){
       console.error('save failed', key, e);
-      showToast('Could not save - your device storage may be full.');
+      showToast('Не удалось сохранить — возможно, хранилище заполнено.');
     }
   }
 
@@ -404,7 +418,16 @@
     return (s===undefined||s===null?'':String(s))
       .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
-  var MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  function ruPlural(n, one, few, many){
+    var m = Math.abs(n) % 100;
+    var n1 = m % 10;
+    if(m > 10 && m < 20) return many;
+    if(n1 > 1 && n1 < 5) return few;
+    if(n1 === 1) return one;
+    return many;
+  }
+  var MONTH_NAMES = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  var REPEAT_LABELS = { daily:'каждый день', weekly:'каждую неделю', monthly:'каждый месяц' };
 
   var toastTimer = null;
   function showToast(msg){
@@ -421,7 +444,7 @@
     state.calYear = now.getFullYear();
     state.calMonth = now.getMonth();
 
-    document.getElementById('topToday').textContent = now.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' });
+    document.getElementById('topToday').textContent = now.toLocaleDateString('ru-RU', { weekday:'short', month:'short', day:'numeric' });
 
     registerServiceWorker();
 
@@ -454,7 +477,7 @@
     if(!('Notification' in window)) return;
     if(Notification.permission === 'granted'){
       try{
-        new Notification('Reminder: ' + r.title, { body: r.notes ? r.notes : (r.date + ' ' + (r.time||'')) });
+        new Notification('Напоминание: ' + r.title, { body: r.notes ? r.notes : (r.date + ' ' + (r.time||'')) });
       }catch(e){ /* ignore */ }
     }
   }
@@ -489,10 +512,10 @@
     if(r.repeat && r.repeat !== 'none' && !r.completed){
       r.date = nextOccurrence(r.date, r.repeat);
       r.notified = false;
-      showToast('Moved to ' + r.date);
+      showToast('Перенесено на ' + parseDateStr(r.date).toLocaleDateString('ru-RU'));
     }else{
       r.completed = !r.completed;
-      if(r.completed){ showToast('Marked done'); }
+      if(r.completed){ showToast('Отмечено как выполнено'); }
     }
     saveKey(STORAGE_KEYS.reminders, state.reminders);
     render();
@@ -590,9 +613,9 @@
     var t = todayStr();
     var tNotesCount = (state.dayNotes[t] || []).length;
     var tRemCount = remindersForDate(t).length;
-    document.getElementById('glanceDate').textContent = new Date().toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' });
-    document.getElementById('glanceNotes').textContent = tNotesCount + ' note' + (tNotesCount===1?'':'s') + ' today';
-    document.getElementById('glanceRem').textContent = tRemCount + ' due today';
+    document.getElementById('glanceDate').textContent = new Date().toLocaleDateString('ru-RU', { weekday:'long', month:'long', day:'numeric' });
+    document.getElementById('glanceNotes').textContent = tNotesCount + ' ' + ruPlural(tNotesCount,'заметка','заметки','заметок') + ' сегодня';
+    document.getElementById('glanceRem').textContent = tRemCount + ' ' + ruPlural(tRemCount,'напоминание','напоминания','напоминаний') + ' сегодня';
 
     var cells = buildMonthMatrix(state.calYear, state.calMonth);
     var html = '';
@@ -635,21 +658,21 @@
 
     var grid = document.getElementById('notesGrid');
     if(list.length === 0){
-      grid.innerHTML = '<div class="empty-state">'+(q ? 'No notes match your search.' : 'No notes yet. Write down what is on your mind.')+'</div>';
+      grid.innerHTML = '<div class="empty-state">'+(q ? 'Ничего не найдено.' : 'Заметок пока нет. Запишите, что у вас на уме.')+'</div>';
       return;
     }
     var html = '';
     list.forEach(function(n){
       var snippet = (n.body||'').slice(0,140);
       html += '<div class="note-card" data-id="'+n.id+'">';
-      html += '<div class="note-card-top"><div class="note-title">'+escapeHtml(n.title||'Untitled')+'</div>';
-      html += '<button class="pin-btn'+(n.pinned?' pinned':'')+'" data-pin="'+n.id+'" title="Pin">★</button></div>';
+      html += '<div class="note-card-top"><div class="note-title">'+escapeHtml(n.title||'Без названия')+'</div>';
+      html += '<button class="pin-btn'+(n.pinned?' pinned':'')+'" data-pin="'+n.id+'" title="Закрепить">★</button></div>';
       html += '<div class="note-snippet">'+escapeHtml(snippet)+'</div>';
       if(n.tags && n.tags.length){
         html += '<div class="note-tags">'+n.tags.map(function(t){ return '<span class="tag-chip">'+escapeHtml(t)+'</span>'; }).join('')+'</div>';
       }
-      html += '<div class="note-card-foot"><span class="day-panel-sub" style="margin:0;">'+new Date(n.updatedAt).toLocaleDateString()+'</span>';
-      html += '<button class="icon-btn" data-del="'+n.id+'" title="Delete">🗑</button></div>';
+      html += '<div class="note-card-foot"><span class="day-panel-sub" style="margin:0;">'+new Date(n.updatedAt).toLocaleDateString('ru-RU')+'</span>';
+      html += '<button class="icon-btn" data-del="'+n.id+'" title="Удалить">🗑</button></div>';
       html += '</div>';
     });
     grid.innerHTML = html;
@@ -688,13 +711,13 @@
   function renderReminders(){
     var statusEl = document.getElementById('alertStatus');
     if(!('Notification' in window)){
-      statusEl.innerHTML = 'Live alerts are not available in this view';
+      statusEl.innerHTML = 'Уведомления недоступны в этом окне';
     }else if(Notification.permission === 'granted'){
-      statusEl.innerHTML = '🔔 Alerts on';
+      statusEl.innerHTML = '🔔 Уведомления включены';
     }else if(Notification.permission === 'denied'){
-      statusEl.innerHTML = 'Alerts blocked, enable in browser settings';
+      statusEl.innerHTML = 'Уведомления заблокированы — включите их в настройках браузера';
     }else{
-      statusEl.innerHTML = '<button class="btn-outline" id="enableAlertsBtn">Turn on alerts</button>';
+      statusEl.innerHTML = '<button class="btn-outline" id="enableAlertsBtn">Включить уведомления</button>';
     }
 
     var groups = { overdue:[], today:[], upcoming:[], completed:[] };
@@ -705,19 +728,19 @@
     groups.completed.sort(function(a,b){ return b.createdAt - a.createdAt; });
 
     function rowHtml(r, statusClass){
-      var rep = r.repeat && r.repeat !== 'none' ? ' · repeats ' + r.repeat : '';
+      var rep = r.repeat && r.repeat !== 'none' ? ' · повтор: ' + REPEAT_LABELS[r.repeat] : '';
       return '<div class="rem-row '+statusClass+'" data-id="'+r.id+'">'+
         '<span class="chk'+(r.completed?' checked':'')+'" data-check="'+r.id+'"></span>'+
         '<div class="rem-main">'+
           '<div class="rem-title"><span class="prio-dot prio-'+r.priority+'"></span>'+escapeHtml(r.title)+'</div>'+
           '<div class="rem-meta"><span>'+r.date+' '+(r.time||'')+'</span><span>'+rep+'</span></div>'+
         '</div>'+
-        '<button class="icon-btn" data-del-rem="'+r.id+'" title="Delete">🗑</button>'+
+        '<button class="icon-btn" data-del-rem="'+r.id+'" title="Удалить">🗑</button>'+
       '</div>';
     }
 
     var html = '';
-    var labels = [['overdue','Overdue'],['today','Due today'],['upcoming','Upcoming']];
+    var labels = [['overdue','Просрочено'],['today','Сегодня'],['upcoming','Скоро']];
     var any = false;
     labels.forEach(function(pair){
       if(groups[pair[0]].length){
@@ -727,11 +750,11 @@
       }
     });
     if(groups.completed.length){
-      html += '<div class="rem-group-label">Done</div>';
+      html += '<div class="rem-group-label">Выполнено</div>';
       groups.completed.forEach(function(r){ html += rowHtml(r, 'completed'); });
     }
     if(!any && !groups.completed.length){
-      html = '<div class="empty-state">Nothing due. Add what you do not want to forget.</div>';
+      html = '<div class="empty-state">Пока ничего не запланировано. Добавьте то, что не хотите забыть.</div>';
     }
     document.getElementById('remLists').innerHTML = html;
 
@@ -755,6 +778,14 @@
     var modal = document.getElementById('dayPanel');
     var overlay = document.getElementById('overlay');
     overlay.classList.add('show');
+    document.body.style.overflow = 'hidden';
+
+    var isMobile = window.matchMedia('(max-width:680px)').matches;
+    if(isMobile){
+      renderDayPanel();
+      requestAnimationFrame(function(){ modal.classList.add('show'); });
+      return;
+    }
 
     modal.style.transition = 'none';
     if(originRect){
@@ -780,16 +811,17 @@
     state.openDay = null;
     document.getElementById('dayPanel').classList.remove('show');
     document.getElementById('overlay').classList.remove('show');
+    document.body.style.overflow = '';
   }
   function renderDayPanel(){
     var ds = state.openDay;
     var d = parseDateStr(ds);
-    document.getElementById('dpTitle').textContent = d.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' });
-    document.getElementById('dpSub').textContent = ds === todayStr() ? 'Today' : d.getFullYear();
+    document.getElementById('dpTitle').textContent = d.toLocaleDateString('ru-RU', { weekday:'long', month:'long', day:'numeric' });
+    document.getElementById('dpSub').textContent = ds === todayStr() ? 'Сегодня' : d.getFullYear();
 
     var notes = state.dayNotes[ds] || [];
     var nh = '';
-    if(notes.length === 0){ nh = '<div class="empty-note">No notes for this day yet.</div>'; }
+    if(notes.length === 0){ nh = '<div class="empty-note">На этот день пока нет заметок.</div>'; }
     else{
       notes.forEach(function(n){
         nh += '<div class="day-note-row"><div class="day-note-text">'+escapeHtml(n.text)+'</div>'+
@@ -803,7 +835,7 @@
 
     var due = state.reminders.filter(function(r){ return r.date === ds; });
     var rh = '';
-    if(due.length === 0){ rh = '<div class="empty-note">No reminders for this day.</div>'; }
+    if(due.length === 0){ rh = '<div class="empty-note">На этот день нет напоминаний.</div>'; }
     else{
       due.forEach(function(r){
         var st = reminderStatus(r);
@@ -855,11 +887,11 @@
       var body = document.getElementById('noteBodyInput').value;
       var tagsRaw = document.getElementById('noteTagsInput').value;
       var tags = tagsRaw.split(',').map(function(t){ return t.trim(); }).filter(Boolean);
-      if(!title && !body){ showToast('Write something before saving.'); return; }
-      upsertNote(state.editingNoteId, { title: title || 'Untitled', body: body, tags: tags });
+      if(!title && !body){ showToast('Напишите что-нибудь перед сохранением.'); return; }
+      upsertNote(state.editingNoteId, { title: title || 'Без названия', body: body, tags: tags });
       closeNoteEditor();
       renderNotes();
-      showToast('Note saved');
+      showToast('Заметка сохранена');
     });
     document.getElementById('noteSearch').addEventListener('input', function(e){ state.search = e.target.value; renderNotes(); });
 
@@ -878,18 +910,18 @@
       var priority = document.getElementById('remPriority').value;
       var repeat = document.getElementById('remRepeat').value;
       var notes = document.getElementById('remNotes').value.trim();
-      if(!title){ showToast('Give the reminder a title.'); return; }
+      if(!title){ showToast('Введите название напоминания.'); return; }
       addReminder({ title:title, date:date, time:time, priority:priority, repeat:repeat, notes:notes });
       document.getElementById('remTitle').value='';
       document.getElementById('remNotes').value='';
       document.getElementById('newRemCard').classList.remove('show');
       renderReminders();
       renderCalendar();
-      showToast('Reminder added');
+      showToast('Напоминание добавлено');
     });
 
     document.getElementById('resetBtn').addEventListener('click', function(){
-      if(confirm('Reset all notes and reminders? This cannot be undone.')){
+      if(confirm('Удалить все заметки и напоминания? Это действие нельзя отменить.')){
         state.dayNotes = {}; state.notes = []; state.reminders = [];
         saveKey(STORAGE_KEYS.dayNotes, {});
         saveKey(STORAGE_KEYS.notes, []);
@@ -897,7 +929,7 @@
         closeNoteEditor();
         closeDayPanel();
         render();
-        showToast('All data cleared');
+        showToast('Все данные удалены');
       }
     });
   }
