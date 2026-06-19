@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daybook</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#FF5C39">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Daybook">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FFFFFF;
+    --surface:#F6F6F4;
+    --surface-press:#EFEFEC;
+    --ink:#16181C;
+    --ink-soft:#76787E;
+    --ink-faint:#BBBDC2;
+    --line:#ECECE9;
+    --accent:#FF5C39;
+    --accent-soft:#FFE6DC;
+    --accent-ink:#9A2E12;
+    --danger:#E0392B;
+    --danger-soft:#FBDEDA;
+    --ok:#1F9D55;
+    --radius:16px;
+    --radius-sm:10px;
+    --font-display:'Space Grotesk', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'IBM Plex Mono', monospace;
+    --ease:cubic-bezier(.22,1,.36,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0; height:100%;}
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--font-body);
+    font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  button,input,select,textarea{font-family:inherit; font-size:inherit; color:inherit;}
+  button{cursor:pointer; background:none; border:none; transition:transform .12s var(--ease), background-color .15s, border-color .15s, color .15s, opacity .15s;}
+  button:active{transform:scale(0.95);}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important;} }
+
+  /* ---------- Topbar ---------- */
+  .topbar{
+    display:flex; align-items:center; gap:26px; padding:18px 32px; border-bottom:1px solid var(--line);
+    position:sticky; top:0; background:var(--bg); z-index:5;
+  }
+  .brand{font-family:var(--font-display); font-weight:600; font-size:18px;}
+  .brand-dot{color:var(--accent);}
+  .tabs{display:flex; gap:4px; background:var(--surface); padding:4px; border-radius:999px;}
+  .tab{padding:8px 16px; border-radius:999px; font-weight:500; font-size:13.5px; color:var(--ink-soft);}
+  .tab:hover{color:var(--ink);}
+  .tab.active{background:var(--ink); color:#fff;}
+  .topbar-spacer{flex:1;}
+  .today-pill{font-family:var(--font-mono); font-size:12px; color:var(--ink-soft); background:var(--surface); padding:7px 13px; border-radius:999px;}
+  .reset-link{font-size:12px; color:var(--ink-faint); padding:6px 4px;}
+  .reset-link:hover{color:var(--danger);}
+
+  /* ---------- Main ---------- */
+  .main{max-width:880px; margin:0 auto; padding:36px 28px 80px;}
+  .view{display:none;}
+  .view.active{display:block; animation:fadeIn .2s var(--ease);}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+  @keyframes popIn{from{opacity:0; transform:scale(0.96);} to{opacity:1; transform:scale(1);}}
+
+  .view-header{display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; gap:14px; flex-wrap:wrap;}
+  .view-title{font-family:var(--font-display); font-size:24px; font-weight:600;}
+  .view-actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+
+  .btn{background:var(--ink); color:#fff; padding:10px 18px; border-radius:999px; font-weight:600; font-size:13px;}
+  .btn:hover{background:#000;}
+  .btn-outline{background:transparent; border:1px solid var(--line); color:var(--ink); padding:9px 16px; border-radius:999px; font-weight:500; font-size:13px;}
+  .btn-outline:hover{border-color:var(--ink-faint); background:var(--surface);}
+  .icon-btn{padding:6px; border-radius:8px; color:var(--ink-faint);}
+  .icon-btn:hover{background:var(--surface); color:var(--danger);}
+  .link-btn{color:var(--accent); font-weight:600; font-size:13px;}
+  .link-btn:hover{text-decoration:underline;}
+
+  /* ---------- Today glance ---------- */
+  .glance-row{display:flex; align-items:center; gap:10px; color:var(--ink-soft); font-size:13px; margin-bottom:24px; flex-wrap:wrap;}
+  .glance-sep{color:var(--line);}
+  .glance-row .link-btn{margin-left:auto;}
+
+  /* ---------- Calendar ---------- */
+  .cal-nav{display:flex; align-items:center; gap:6px;}
+  .cal-month-label{font-family:var(--font-display); font-size:16.5px; min-width:150px; text-align:center; font-weight:600;}
+  .cal-weekdays{display:grid; grid-template-columns:repeat(7,1fr); margin-bottom:4px;}
+  .cal-weekdays div{font-family:var(--font-mono); font-size:10.5px; color:var(--ink-faint); text-align:center; letter-spacing:1px;}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px;}
+  .cal-cell{
+    background:transparent; border-radius:var(--radius-sm); min-height:78px; padding:10px 8px;
+    display:flex; flex-direction:column; align-items:flex-start; gap:6px; text-align:left;
+  }
+  .cal-cell:hover{background:var(--surface);}
+  .cal-cell.other-month .cal-daynum{color:var(--ink-faint);}
+  .cal-daynum{font-family:var(--font-mono); font-size:13px; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center;}
+  .cal-daynum.is-today{background:var(--accent); color:#fff; font-weight:600;}
+  .cal-dots{display:flex; gap:4px; margin-top:auto;}
+  .dot{width:6px; height:6px; border-radius:50%;}
+  .dot-note{background:var(--ink-faint);}
+  .dot-rem{background:var(--accent);}
+  .dot-overdue{background:var(--danger);}
+
+  /* ---------- Day modal (grows from the pressed box) ---------- */
+  .overlay{position:fixed; inset:0; background:rgba(20,20,18,0.32); opacity:0; pointer-events:none; transition:opacity .25s var(--ease); z-index:20;}
+  .overlay.show{opacity:1; pointer-events:auto;}
+  .day-modal{
+    position:fixed; top:50%; left:50%; width:min(440px,92vw); max-height:82vh; overflow-y:auto;
+    background:#fff; border-radius:20px; box-shadow:0 30px 70px rgba(20,20,18,0.22);
+    padding:26px; z-index:21; transform:translate(-50%,-50%) scale(0.85); opacity:0; pointer-events:none;
+    transition:transform .32s var(--ease), opacity .22s var(--ease);
+  }
+  .day-modal.show{opacity:1; pointer-events:auto; transform:translate(-50%,-50%) scale(1);}
+  .sheet-handle{display:none;}
+  @media (max-width:680px){
+    .day-modal{
+      top:auto; left:0; right:0; bottom:0; width:100%; max-width:100%;
+      max-height:86vh; max-height:86dvh;
+      border-radius:20px 20px 0 0;
+      transform:translateY(100%); opacity:1;
+      padding:12px 20px 28px;
+      transition:transform .3s var(--ease);
+    }
+    .day-modal.show{transform:translateY(0);}
+    .sheet-handle{display:block; width:36px; height:4px; border-radius:999px; background:var(--line); margin:0 auto 14px;}
+  }
+  .day-panel-head{display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:16px;}
+  .day-panel-title{font-family:var(--font-display); font-size:19px; font-weight:600;}
+  .day-panel-sub{font-family:var(--font-mono); font-size:11.5px; color:var(--ink-soft); margin-top:2px;}
+  .day-section-label{font-size:10.5px; text-transform:uppercase; letter-spacing:1px; color:var(--ink-faint); margin:18px 0 8px;}
+  .day-note-row{display:flex; gap:8px; align-items:flex-start; padding:9px 0; border-bottom:1px solid var(--line);}
+  .day-note-text{flex:1; font-size:14px; white-space:pre-wrap; word-break:break-word;}
+  .day-add-row{display:flex; gap:8px; margin-top:8px;}
+  .day-add-row input{flex:1; border:1px solid var(--line); border-radius:999px; padding:9px 14px; background:var(--surface);}
+  .empty-note{color:var(--ink-faint); font-size:13px; padding:8px 0;}
+  .rem-mini{display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--line); font-size:13px;}
+  .rem-mini.overdue .rem-mini-title{color:var(--danger);}
+
+  /* ---------- Checkbox ---------- */
+  .chk{
+    width:18px; height:18px; border-radius:50%; border:1.5px solid var(--ink-faint); flex-shrink:0;
+    display:inline-flex; align-items:center; justify-content:center; background:#fff; transition:transform .12s var(--ease), background .15s, border-color .15s;
+  }
+  .chk:active{transform:scale(0.85);}
+  .chk.checked{background:var(--ok); border-color:var(--ok);}
+  .chk.checked::after{content:'✓'; color:#fff; font-size:11px;}
+
+  /* ---------- Notes ---------- */
+  .search-input{border:1px solid var(--line); border-radius:999px; padding:9px 15px; background:var(--surface); width:200px;}
+  .editor-card{
+    background:var(--surface); border-radius:var(--radius); padding:18px; margin-bottom:18px; animation:popIn .18s var(--ease);
+  }
+  .editor-card input[type=text], .editor-card textarea{
+    width:100%; border:1px solid var(--line); border-radius:12px; padding:10px 13px; background:#fff; margin-bottom:10px;
+  }
+  .editor-card textarea{min-height:100px; resize:vertical; font-family:inherit;}
+  .editor-row{display:flex; gap:10px; justify-content:flex-end;}
+  .notes-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px;}
+  .note-card{
+    background:var(--surface); border-radius:var(--radius); padding:15px; cursor:pointer;
+    display:flex; flex-direction:column; gap:8px; min-height:118px;
+    transition:transform .15s var(--ease), background .15s;
+  }
+  .note-card:hover{transform:translateY(-2px); background:var(--surface-press);}
+  .note-card:active{transform:scale(0.98);}
+  .note-card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:6px;}
+  .note-title{font-weight:600; font-size:14px;}
+  .note-snippet{color:var(--ink-soft); font-size:13px; flex:1; white-space:pre-wrap; word-break:break-word;}
+  .note-tags{display:flex; gap:6px; flex-wrap:wrap;}
+  .tag-chip{font-family:var(--font-mono); font-size:10px; background:#fff; color:var(--ink-soft); padding:2px 8px; border-radius:999px;}
+  .note-card-foot{display:flex; justify-content:space-between; align-items:center;}
+  .pin-btn{font-size:14px; color:var(--ink-faint); padding:2px;}
+  .pin-btn.pinned{color:var(--accent);}
+  .empty-state{color:var(--ink-faint); padding:50px 0; text-align:center; font-size:14px;}
+
+  /* ---------- Reminders ---------- */
+  .alert-status{font-size:12px; color:var(--ink-soft); display:flex; align-items:center; gap:6px;}
+  .rem-group-label{font-size:10.5px; text-transform:uppercase; letter-spacing:1px; color:var(--ink-faint); margin:22px 0 8px;}
+  .rem-row{
+    display:flex; align-items:center; gap:12px; background:var(--surface); border-radius:14px;
+    padding:12px 15px; margin-bottom:8px; border-left:3px solid var(--accent); transition:background .15s;
+  }
+  .rem-row:hover{background:var(--surface-press);}
+  .rem-row.overdue{border-left-color:var(--danger);}
+  .rem-row.completed{opacity:0.5; border-left-color:var(--line);}
+  .rem-row.completed .rem-title{text-decoration:line-through;}
+  .rem-main{flex:1; min-width:0;}
+  .rem-title{font-weight:600; font-size:13.5px;}
+  .rem-meta{font-family:var(--font-mono); font-size:11px; color:var(--ink-soft); margin-top:3px; display:flex; gap:10px;}
+  .prio-dot{width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:6px;}
+  .prio-high{background:var(--danger);} .prio-medium{background:var(--accent);} .prio-low{background:var(--ok);}
+
+  .new-rem-card{background:var(--surface); border-radius:var(--radius); padding:18px; margin-bottom:10px; display:none;}
+  .new-rem-card.show{display:block; animation:popIn .18s var(--ease);}
+  .form-grid{display:grid; grid-template-columns:1.4fr 1fr 0.8fr; gap:10px; margin-bottom:10px;}
+  .form-grid-2{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;}
+  .form-field label{display:block; font-size:10.5px; color:var(--ink-soft); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px;}
+  .form-field input, .form-field select, .form-field textarea{
+    width:100%; border:1px solid var(--line); border-radius:10px; padding:9px 11px; background:#fff;
+  }
+
+  /* ---------- Toast ---------- */
+  .toast{
+    position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(10px); background:var(--ink); color:#fff;
+    padding:11px 20px; border-radius:999px; font-size:13px; opacity:0; pointer-events:none; transition:all .25s var(--ease); z-index:50;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  /* ---------- Loading ---------- */
+  #loadingScreen{position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px; z-index:100;}
+  #loadingScreen .ld-word{font-family:var(--font-display); font-size:20px; font-weight:600;}
+  #loadingScreen .ld-sub{font-size:12px; color:var(--ink-soft); font-family:var(--font-mono);}
+
+  @media (max-width:720px){
+    .topbar{padding:14px 18px; gap:14px;}
+    .today-pill{display:none;}
+    .main{padding:24px 16px 70px;}
+    .cal-cell{min-height:54px; padding:6px;}
+    .form-grid{grid-template-columns:1fr;}
+    .form-grid-2{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div id="loadingScreen">
+  <div class="ld-word">Daybook</div>
+  <div class="ld-sub" id="loadingMsg">открываем ваш блокнот</div>
+</div>
+
+<div id="app" style="display:none;">
+
+  <div class="topbar">
+    <div class="brand">Daybook<span class="brand-dot">.</span></div>
+    <nav class="tabs">
+      <button class="tab active" data-view="calendar">Календарь</button>
+      <button class="tab" data-view="notes">Заметки</button>
+      <button class="tab" data-view="reminders">Напоминания</button>
+    </nav>
+    <div class="topbar-spacer"></div>
+    <div class="today-pill" id="topToday">—</div>
+    <button class="reset-link" id="resetBtn">Сбросить данные</button>
+  </div>
+
+  <main class="main">
+
+    <!-- CALENDAR VIEW -->
+    <section class="view active" id="view-calendar">
+      <div class="view-header">
+        <div class="view-title">Календарь</div>
+        <div class="cal-nav">
+          <button class="icon-btn" id="prevMonth">‹</button>
+          <div class="cal-month-label" id="monthLabel">—</div>
+          <button class="icon-btn" id="nextMonth">›</button>
+          <button class="btn-outline" id="todayBtn">Сегодня</button>
+        </div>
+      </div>
+
+      <div class="glance-row">
+        <span id="glanceDate">—</span>
+        <span class="glance-sep">·</span>
+        <span id="glanceNotes">0 заметок сегодня</span>
+        <span class="glance-sep">·</span>
+        <span id="glanceRem">0 напоминаний сегодня</span>
+        <button class="link-btn" id="openTodayBtn">Открыть сегодня →</button>
+      </div>
+
+      <div class="cal-weekdays"><div>ПН</div><div>ВТ</div><div>СР</div><div>ЧТ</div><div>ПТ</div><div>СБ</div><div>ВС</div></div>
+      <div class="cal-grid" id="calGrid"></div>
+    </section>
+
+    <!-- NOTES VIEW -->
+    <section class="view" id="view-notes">
+      <div class="view-header">
+        <div class="view-title">Заметки</div>
+        <div class="view-actions">
+          <input class="search-input" id="noteSearch" type="text" placeholder="Поиск заметок">
+          <button class="btn" id="newNoteBtn">+ Новая заметка</button>
+        </div>
+      </div>
+
+      <div class="editor-card" id="noteEditor" style="display:none;">
+        <input type="text" id="noteTitleInput" placeholder="Заголовок">
+        <textarea id="noteBodyInput" placeholder="Запишите, что у вас на уме"></textarea>
+        <input type="text" id="noteTagsInput" placeholder="Теги через запятую (необязательно)">
+        <div class="editor-row">
+          <button class="btn-outline" id="noteCancelBtn">Отмена</button>
+          <button class="btn" id="noteSaveBtn">Сохранить заметку</button>
+        </div>
+      </div>
+
+      <div class="notes-grid" id="notesGrid"></div>
+    </section>
+
+    <!-- REMINDERS VIEW -->
+    <section class="view" id="view-reminders">
+      <div class="view-header">
+        <div class="view-title">Напоминания</div>
+        <div class="view-actions">
+          <span class="alert-status" id="alertStatus"></span>
+          <button class="btn" id="newRemBtn">+ Добавить напоминание</button>
+        </div>
+      </div>
+
+      <div class="new-rem-card" id="newRemCard">
+        <div class="form-grid">
+          <div class="form-field"><label>Название</label><input type="text" id="remTitle" placeholder="Что нужно сделать?"></div>
+          <div class="form-field"><label>Дата</label><input type="date" id="remDate"></div>
+          <div class="form-field"><label>Время</label><input type="time" id="remTime" value="09:00"></div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-field">
+            <label>Приоритет</label>
+            <select id="remPriority"><option value="low">Низкий</option><option value="medium" selected>Средний</option><option value="high">Высокий</option></select>
+          </div>
+          <div class="form-field">
+            <label>Повтор</label>
+            <select id="remRepeat"><option value="none" selected>Без повтора</option><option value="daily">Каждый день</option><option value="weekly">Каждую неделю</option><option value="monthly">Каждый месяц</option></select>
+          </div>
+        </div>
+        <div class="form-field" style="margin-bottom:10px;"><label>Заметка (необязательно)</label><textarea id="remNotes" style="min-height:60px;"></textarea></div>
+        <div class="editor-row">
+          <button class="btn-outline" id="remCancelBtn">Отмена</button>
+          <button class="btn" id="remSaveBtn">Сохранить напоминание</button>
+        </div>
+      </div>
+
+      <div id="remLists"></div>
+    </section>
+
+  </main>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="day-modal" id="dayPanel">
+  <div class="sheet-handle"></div>
+  <div class="day-panel-head">
+    <div>
+      <div class="day-panel-title" id="dpTitle">—</div>
+      <div class="day-panel-sub" id="dpSub">—</div>
+    </div>
+    <button class="icon-btn" id="dpClose">✕</button>
+  </div>
+
+  <div class="day-section-label">Заметки на этот день</div>
+  <div id="dpNotes"></div>
+  <div class="day-add-row">
+    <input type="text" id="dpNoteInput" placeholder="Добавить заметку">
+    <button class="btn" id="dpNoteAdd">Добавить</button>
+  </div>
+
+  <div class="day-section-label">Напоминания на этот день</div>
+  <div id="dpRem"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ===================== Storage ===================== */
+  var STORAGE_KEYS = { dayNotes:'daynotes-all', notes:'notes-all', reminders:'reminders-all' };
+
+  async function loadKey(key, fallback){
+    try{
+      var raw = localStorage.getItem(key);
+      if(raw === null) return fallback;
+      return JSON.parse(raw);
+    }catch(e){ return fallback; }
+  }
+
+  async function saveKey(key, value){
+    try{
+      localStorage.setItem(key, JSON.stringify(value));
+    }catch(e){
+      console.error('save failed', key, e);
+      showToast('Не удалось сохранить — возможно, хранилище заполнено.');
+    }
+  }
+
+  function registerServiceWorker(){
+    if('serviceWorker' in navigator){
+      window.addEventListener('load', function(){
+        navigator.serviceWorker.register('./sw.js').catch(function(){ /* ignore - app still works without it */ });
+      });
+    }
+  }
+
+  /* ===================== State ===================== */
+  var state = {
+    dayNotes: {},
+    notes: [],
+    reminders: [],
+    view: 'calendar',
+    calYear: 0,
+    calMonth: 0,
+    openDay: null,
+    search: '',
+    editingNoteId: null
+  };
+
+  /* ===================== Helpers ===================== */
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  function pad(n){ return n < 10 ? '0'+n : ''+n; }
+  function fmtDate(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+  function parseDateStr(s){ var p = s.split('-').map(Number); return new Date(p[0], p[1]-1, p[2]); }
+  function todayStr(){ return fmtDate(new Date()); }
+  function escapeHtml(s){
+    return (s===undefined||s===null?'':String(s))
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function ruPlural(n, one, few, many){
+    var m = Math.abs(n) % 100;
+    var n1 = m % 10;
+    if(m > 10 && m < 20) return many;
+    if(n1 > 1 && n1 < 5) return few;
+    if(n1 === 1) return one;
+    return many;
+  }
+  var MONTH_NAMES = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  var REPEAT_LABELS = { daily:'каждый день', weekly:'каждую неделю', monthly:'каждый месяц' };
+
+  var toastTimer = null;
+  function showToast(msg){
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 2600);
+  }
+
+  /* ===================== Init ===================== */
+  async function init(){
+    var now = new Date();
+    state.calYear = now.getFullYear();
+    state.calMonth = now.getMonth();
+
+    document.getElementById('topToday').textContent = now.toLocaleDateString('ru-RU', { weekday:'short', month:'short', day:'numeric' });
+
+    registerServiceWorker();
+
+    state.dayNotes = await loadKey(STORAGE_KEYS.dayNotes, {});
+    state.notes = await loadKey(STORAGE_KEYS.notes, []);
+    state.reminders = await loadKey(STORAGE_KEYS.reminders, []);
+
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+
+    bindEvents();
+    render();
+    checkDueReminders();
+    setInterval(checkDueReminders, 30000);
+  }
+
+  /* ===================== Reminder status / notifications ===================== */
+  function reminderDueDate(r){ return new Date(r.date + 'T' + (r.time || '09:00') + ':00'); }
+
+  function reminderStatus(r){
+    if(r.completed) return 'completed';
+    var due = reminderDueDate(r);
+    var now = new Date();
+    if(due.getTime() <= now.getTime()) return 'overdue';
+    if(r.date === todayStr()) return 'today';
+    return 'upcoming';
+  }
+
+  function fireNotification(r){
+    if(!('Notification' in window)) return;
+    if(Notification.permission === 'granted'){
+      try{
+        new Notification('Напоминание: ' + r.title, { body: r.notes ? r.notes : (r.date + ' ' + (r.time||'')) });
+      }catch(e){ /* ignore */ }
+    }
+  }
+
+  function checkDueReminders(){
+    var changed = false;
+    var now = new Date();
+    state.reminders.forEach(function(r){
+      if(!r.completed && !r.notified){
+        if(reminderDueDate(r).getTime() <= now.getTime()){
+          r.notified = true;
+          changed = true;
+          fireNotification(r);
+        }
+      }
+    });
+    if(changed){ saveKey(STORAGE_KEYS.reminders, state.reminders); }
+    if(state.view === 'reminders' || state.view === 'calendar'){ render(); }
+  }
+
+  function nextOccurrence(dateStr, repeat){
+    var d = parseDateStr(dateStr);
+    if(repeat === 'daily') d.setDate(d.getDate()+1);
+    else if(repeat === 'weekly') d.setDate(d.getDate()+7);
+    else if(repeat === 'monthly') d.setMonth(d.getMonth()+1);
+    return fmtDate(d);
+  }
+
+  function toggleReminderCheck(id){
+    var r = state.reminders.find(function(x){ return x.id === id; });
+    if(!r) return;
+    if(r.repeat && r.repeat !== 'none' && !r.completed){
+      r.date = nextOccurrence(r.date, r.repeat);
+      r.notified = false;
+      showToast('Перенесено на ' + parseDateStr(r.date).toLocaleDateString('ru-RU'));
+    }else{
+      r.completed = !r.completed;
+      if(r.completed){ showToast('Отмечено как выполнено'); }
+    }
+    saveKey(STORAGE_KEYS.reminders, state.reminders);
+    render();
+  }
+
+  function deleteReminder(id){
+    state.reminders = state.reminders.filter(function(x){ return x.id !== id; });
+    saveKey(STORAGE_KEYS.reminders, state.reminders);
+    render();
+  }
+
+  function addReminder(data){
+    state.reminders.push({
+      id: uid(), title: data.title, notes: data.notes, date: data.date, time: data.time,
+      priority: data.priority, repeat: data.repeat, completed:false, notified:false, createdAt: Date.now()
+    });
+    saveKey(STORAGE_KEYS.reminders, state.reminders);
+  }
+
+  function remindersForDate(dateStr){
+    return state.reminders.filter(function(r){ return r.date === dateStr && !r.completed; });
+  }
+
+  /* ===================== Day notes ===================== */
+  function addDayNote(dateStr, text){
+    if(!text.trim()) return;
+    if(!state.dayNotes[dateStr]) state.dayNotes[dateStr] = [];
+    state.dayNotes[dateStr].push({ id: uid(), text: text.trim(), createdAt: Date.now() });
+    saveKey(STORAGE_KEYS.dayNotes, state.dayNotes);
+  }
+
+  function deleteDayNote(dateStr, id){
+    if(!state.dayNotes[dateStr]) return;
+    state.dayNotes[dateStr] = state.dayNotes[dateStr].filter(function(n){ return n.id !== id; });
+    if(state.dayNotes[dateStr].length === 0) delete state.dayNotes[dateStr];
+    saveKey(STORAGE_KEYS.dayNotes, state.dayNotes);
+  }
+
+  /* ===================== Notes (general) ===================== */
+  function upsertNote(id, data){
+    if(id){
+      var n = state.notes.find(function(x){ return x.id === id; });
+      if(n){ n.title = data.title; n.body = data.body; n.tags = data.tags; n.updatedAt = Date.now(); }
+    }else{
+      state.notes.push({ id: uid(), title:data.title, body:data.body, tags:data.tags, pinned:false, createdAt:Date.now(), updatedAt:Date.now() });
+    }
+    saveKey(STORAGE_KEYS.notes, state.notes);
+  }
+  function deleteNote(id){
+    state.notes = state.notes.filter(function(n){ return n.id !== id; });
+    saveKey(STORAGE_KEYS.notes, state.notes);
+  }
+  function toggleNotePin(id){
+    var n = state.notes.find(function(x){ return x.id === id; });
+    if(n){ n.pinned = !n.pinned; saveKey(STORAGE_KEYS.notes, state.notes); render(); }
+  }
+
+  /* ===================== Calendar build ===================== */
+  function buildMonthMatrix(year, month){
+    var first = new Date(year, month, 1);
+    var startDow = (first.getDay() + 6) % 7;
+    var daysInMonth = new Date(year, month+1, 0).getDate();
+    var daysInPrev = new Date(year, month, 0).getDate();
+    var cells = [];
+    for(var i=0;i<startDow;i++){
+      cells.push({ date: new Date(year, month-1, daysInPrev-startDow+1+i), otherMonth:true });
+    }
+    for(var d=1; d<=daysInMonth; d++){
+      cells.push({ date: new Date(year, month, d), otherMonth:false });
+    }
+    while(cells.length % 7 !== 0){
+      var last = cells[cells.length-1].date;
+      var next = new Date(last.getFullYear(), last.getMonth(), last.getDate()+1);
+      cells.push({ date: next, otherMonth:true });
+    }
+    return cells;
+  }
+
+  /* ===================== Rendering ===================== */
+  function render(){
+    document.querySelectorAll('.tab').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-view') === state.view);
+    });
+    document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+    document.getElementById('view-' + state.view).classList.add('active');
+
+    if(state.view === 'calendar') renderCalendar();
+    if(state.view === 'notes') renderNotes();
+    if(state.view === 'reminders') renderReminders();
+    if(state.openDay) renderDayPanel();
+  }
+
+  function renderCalendar(){
+    document.getElementById('monthLabel').textContent = MONTH_NAMES[state.calMonth] + ' ' + state.calYear;
+    var t = todayStr();
+    var tNotesCount = (state.dayNotes[t] || []).length;
+    var tRemCount = remindersForDate(t).length;
+    document.getElementById('glanceDate').textContent = new Date().toLocaleDateString('ru-RU', { weekday:'long', month:'long', day:'numeric' });
+    document.getElementById('glanceNotes').textContent = tNotesCount + ' ' + ruPlural(tNotesCount,'заметка','заметки','заметок') + ' сегодня';
+    document.getElementById('glanceRem').textContent = tRemCount + ' ' + ruPlural(tRemCount,'напоминание','напоминания','напоминаний') + ' сегодня';
+
+    var cells = buildMonthMatrix(state.calYear, state.calMonth);
+    var html = '';
+    cells.forEach(function(c){
+      var ds = fmtDate(c.date);
+      var isToday = ds === t;
+      var dayNoteCount = (state.dayNotes[ds] || []).length;
+      var dueList = state.reminders.filter(function(r){ return r.date === ds && !r.completed; });
+      var hasOverdue = dueList.some(function(r){ return reminderStatus(r) === 'overdue'; });
+
+      html += '<button class="cal-cell'+(c.otherMonth?' other-month':'')+'" data-date="'+ds+'">';
+      html += '<span class="cal-daynum'+(isToday?' is-today':'')+'">'+c.date.getDate()+'</span>';
+      if(dayNoteCount > 0 || dueList.length > 0){
+        html += '<span class="cal-dots">';
+        if(dayNoteCount > 0) html += '<span class="dot dot-note"></span>';
+        if(dueList.length > 0) html += '<span class="dot '+(hasOverdue?'dot-overdue':'dot-rem')+'"></span>';
+        html += '</span>';
+      }
+      html += '</button>';
+    });
+    document.getElementById('calGrid').innerHTML = html;
+
+    document.querySelectorAll('#calGrid .cal-cell').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        openDayPanel(btn.getAttribute('data-date'), btn.getBoundingClientRect());
+      });
+    });
+  }
+
+  function renderNotes(){
+    var q = state.search.trim().toLowerCase();
+    var list = state.notes.filter(function(n){
+      if(!q) return true;
+      var hay = (n.title+' '+n.body+' '+(n.tags||[]).join(' ')).toLowerCase();
+      return hay.indexOf(q) !== -1;
+    }).sort(function(a,b){
+      if(!!b.pinned !== !!a.pinned) return a.pinned ? -1 : 1;
+      return b.updatedAt - a.updatedAt;
+    });
+
+    var grid = document.getElementById('notesGrid');
+    if(list.length === 0){
+      grid.innerHTML = '<div class="empty-state">'+(q ? 'Ничего не найдено.' : 'Заметок пока нет. Запишите, что у вас на уме.')+'</div>';
+      return;
+    }
+    var html = '';
+    list.forEach(function(n){
+      var snippet = (n.body||'').slice(0,140);
+      html += '<div class="note-card" data-id="'+n.id+'">';
+      html += '<div class="note-card-top"><div class="note-title">'+escapeHtml(n.title||'Без названия')+'</div>';
+      html += '<button class="pin-btn'+(n.pinned?' pinned':'')+'" data-pin="'+n.id+'" title="Закрепить">★</button></div>';
+      html += '<div class="note-snippet">'+escapeHtml(snippet)+'</div>';
+      if(n.tags && n.tags.length){
+        html += '<div class="note-tags">'+n.tags.map(function(t){ return '<span class="tag-chip">'+escapeHtml(t)+'</span>'; }).join('')+'</div>';
+      }
+      html += '<div class="note-card-foot"><span class="day-panel-sub" style="margin:0;">'+new Date(n.updatedAt).toLocaleDateString('ru-RU')+'</span>';
+      html += '<button class="icon-btn" data-del="'+n.id+'" title="Удалить">🗑</button></div>';
+      html += '</div>';
+    });
+    grid.innerHTML = html;
+
+    grid.querySelectorAll('.note-card').forEach(function(card){
+      card.addEventListener('click', function(e){
+        if(e.target.closest('[data-pin]') || e.target.closest('[data-del]')) return;
+        openNoteEditor(card.getAttribute('data-id'));
+      });
+    });
+    grid.querySelectorAll('[data-pin]').forEach(function(b){
+      b.addEventListener('click', function(e){ e.stopPropagation(); toggleNotePin(b.getAttribute('data-pin')); });
+    });
+    grid.querySelectorAll('[data-del]').forEach(function(b){
+      b.addEventListener('click', function(e){ e.stopPropagation(); deleteNote(b.getAttribute('data-del')); render(); });
+    });
+  }
+
+  function openNoteEditor(id){
+    state.editingNoteId = id || null;
+    var editor = document.getElementById('noteEditor');
+    var n = id ? state.notes.find(function(x){ return x.id === id; }) : null;
+    document.getElementById('noteTitleInput').value = n ? n.title : '';
+    document.getElementById('noteBodyInput').value = n ? n.body : '';
+    document.getElementById('noteTagsInput').value = n && n.tags ? n.tags.join(', ') : '';
+    editor.style.display = 'none';
+    void editor.offsetWidth;
+    editor.style.display = 'block';
+    document.getElementById('noteTitleInput').focus();
+  }
+  function closeNoteEditor(){
+    document.getElementById('noteEditor').style.display = 'none';
+    state.editingNoteId = null;
+  }
+
+  function renderReminders(){
+    var statusEl = document.getElementById('alertStatus');
+    if(!('Notification' in window)){
+      statusEl.innerHTML = 'Уведомления недоступны в этом окне';
+    }else if(Notification.permission === 'granted'){
+      statusEl.innerHTML = '🔔 Уведомления включены';
+    }else if(Notification.permission === 'denied'){
+      statusEl.innerHTML = 'Уведомления заблокированы — включите их в настройках браузера';
+    }else{
+      statusEl.innerHTML = '<button class="btn-outline" id="enableAlertsBtn">Включить уведомления</button>';
+    }
+
+    var groups = { overdue:[], today:[], upcoming:[], completed:[] };
+    state.reminders.forEach(function(r){ groups[reminderStatus(r)].push(r); });
+    ['overdue','today','upcoming'].forEach(function(k){
+      groups[k].sort(function(a,b){ return reminderDueDate(a) - reminderDueDate(b); });
+    });
+    groups.completed.sort(function(a,b){ return b.createdAt - a.createdAt; });
+
+    function rowHtml(r, statusClass){
+      var rep = r.repeat && r.repeat !== 'none' ? ' · повтор: ' + REPEAT_LABELS[r.repeat] : '';
+      return '<div class="rem-row '+statusClass+'" data-id="'+r.id+'">'+
+        '<span class="chk'+(r.completed?' checked':'')+'" data-check="'+r.id+'"></span>'+
+        '<div class="rem-main">'+
+          '<div class="rem-title"><span class="prio-dot prio-'+r.priority+'"></span>'+escapeHtml(r.title)+'</div>'+
+          '<div class="rem-meta"><span>'+r.date+' '+(r.time||'')+'</span><span>'+rep+'</span></div>'+
+        '</div>'+
+        '<button class="icon-btn" data-del-rem="'+r.id+'" title="Удалить">🗑</button>'+
+      '</div>';
+    }
+
+    var html = '';
+    var labels = [['overdue','Просрочено'],['today','Сегодня'],['upcoming','Скоро']];
+    var any = false;
+    labels.forEach(function(pair){
+      if(groups[pair[0]].length){
+        any = true;
+        html += '<div class="rem-group-label">'+pair[1]+'</div>';
+        groups[pair[0]].forEach(function(r){ html += rowHtml(r, pair[0]); });
+      }
+    });
+    if(groups.completed.length){
+      html += '<div class="rem-group-label">Выполнено</div>';
+      groups.completed.forEach(function(r){ html += rowHtml(r, 'completed'); });
+    }
+    if(!any && !groups.completed.length){
+      html = '<div class="empty-state">Пока ничего не запланировано. Добавьте то, что не хотите забыть.</div>';
+    }
+    document.getElementById('remLists').innerHTML = html;
+
+    document.querySelectorAll('[data-check]').forEach(function(el){
+      el.addEventListener('click', function(){ toggleReminderCheck(el.getAttribute('data-check')); });
+    });
+    document.querySelectorAll('[data-del-rem]').forEach(function(el){
+      el.addEventListener('click', function(){ deleteReminder(el.getAttribute('data-del-rem')); });
+    });
+    var enableBtn = document.getElementById('enableAlertsBtn');
+    if(enableBtn){
+      enableBtn.addEventListener('click', function(){
+        Notification.requestPermission().then(function(){ renderReminders(); });
+      });
+    }
+  }
+
+  /* ===================== Day modal (grow from pressed box) ===================== */
+  function openDayPanel(dateStr, originRect){
+    state.openDay = dateStr;
+    var modal = document.getElementById('dayPanel');
+    var overlay = document.getElementById('overlay');
+    overlay.classList.add('show');
+    document.body.style.overflow = 'hidden';
+
+    var isMobile = window.matchMedia('(max-width:680px)').matches;
+    if(isMobile){
+      renderDayPanel();
+      requestAnimationFrame(function(){ modal.classList.add('show'); });
+      return;
+    }
+
+    modal.style.transition = 'none';
+    if(originRect){
+      var dx = (originRect.left + originRect.width/2) - window.innerWidth/2;
+      var dy = (originRect.top + originRect.height/2) - window.innerHeight/2;
+      modal.style.transform = 'translate(-50%,-50%) translate('+dx+'px,'+dy+'px) scale(0.18)';
+    }else{
+      modal.style.transform = 'translate(-50%,-50%) scale(0.85)';
+    }
+    modal.style.opacity = '0';
+    void modal.offsetHeight;
+    modal.style.transition = '';
+
+    renderDayPanel();
+
+    requestAnimationFrame(function(){
+      modal.classList.add('show');
+      modal.style.transform = '';
+      modal.style.opacity = '';
+    });
+  }
+  function closeDayPanel(){
+    state.openDay = null;
+    document.getElementById('dayPanel').classList.remove('show');
+    document.getElementById('overlay').classList.remove('show');
+    document.body.style.overflow = '';
+  }
+  function renderDayPanel(){
+    var ds = state.openDay;
+    var d = parseDateStr(ds);
+    document.getElementById('dpTitle').textContent = d.toLocaleDateString('ru-RU', { weekday:'long', month:'long', day:'numeric' });
+    document.getElementById('dpSub').textContent = ds === todayStr() ? 'Сегодня' : d.getFullYear();
+
+    var notes = state.dayNotes[ds] || [];
+    var nh = '';
+    if(notes.length === 0){ nh = '<div class="empty-note">На этот день пока нет заметок.</div>'; }
+    else{
+      notes.forEach(function(n){
+        nh += '<div class="day-note-row"><div class="day-note-text">'+escapeHtml(n.text)+'</div>'+
+          '<button class="icon-btn" data-del-daynote="'+n.id+'">🗑</button></div>';
+      });
+    }
+    document.getElementById('dpNotes').innerHTML = nh;
+    document.querySelectorAll('[data-del-daynote]').forEach(function(el){
+      el.addEventListener('click', function(){ deleteDayNote(ds, el.getAttribute('data-del-daynote')); renderDayPanel(); renderCalendar(); });
+    });
+
+    var due = state.reminders.filter(function(r){ return r.date === ds; });
+    var rh = '';
+    if(due.length === 0){ rh = '<div class="empty-note">На этот день нет напоминаний.</div>'; }
+    else{
+      due.forEach(function(r){
+        var st = reminderStatus(r);
+        rh += '<div class="rem-mini'+(st==='overdue'?' overdue':'')+'">'+
+          '<span class="chk'+(r.completed?' checked':'')+'" data-check-mini="'+r.id+'"></span>'+
+          '<span class="rem-mini-title" style="flex:1;'+(r.completed?'text-decoration:line-through;color:var(--ink-faint);':'')+'">'+escapeHtml(r.title)+'</span>'+
+          '<span class="day-panel-sub" style="margin:0;">'+(r.time||'')+'</span></div>';
+      });
+    }
+    document.getElementById('dpRem').innerHTML = rh;
+    document.querySelectorAll('[data-check-mini]').forEach(function(el){
+      el.addEventListener('click', function(){ toggleReminderCheck(el.getAttribute('data-check-mini')); renderDayPanel(); renderCalendar(); });
+    });
+  }
+
+  /* ===================== Events ===================== */
+  function bindEvents(){
+    document.querySelectorAll('.tab').forEach(function(b){
+      b.addEventListener('click', function(){ state.view = b.getAttribute('data-view'); render(); });
+    });
+
+    document.getElementById('prevMonth').addEventListener('click', function(){
+      state.calMonth--; if(state.calMonth < 0){ state.calMonth = 11; state.calYear--; } renderCalendar();
+    });
+    document.getElementById('nextMonth').addEventListener('click', function(){
+      state.calMonth++; if(state.calMonth > 11){ state.calMonth = 0; state.calYear++; } renderCalendar();
+    });
+    document.getElementById('todayBtn').addEventListener('click', function(){
+      var now = new Date(); state.calYear = now.getFullYear(); state.calMonth = now.getMonth(); renderCalendar();
+    });
+    document.getElementById('openTodayBtn').addEventListener('click', function(){ openDayPanel(todayStr(), null); });
+
+    document.getElementById('dpClose').addEventListener('click', closeDayPanel);
+    document.getElementById('overlay').addEventListener('click', closeDayPanel);
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && state.openDay) closeDayPanel(); });
+
+    document.getElementById('dpNoteAdd').addEventListener('click', function(){
+      var input = document.getElementById('dpNoteInput');
+      if(input.value.trim()){ addDayNote(state.openDay, input.value); input.value=''; renderDayPanel(); renderCalendar(); }
+    });
+    document.getElementById('dpNoteInput').addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){ document.getElementById('dpNoteAdd').click(); }
+    });
+
+    document.getElementById('newNoteBtn').addEventListener('click', function(){ openNoteEditor(null); });
+    document.getElementById('noteCancelBtn').addEventListener('click', closeNoteEditor);
+    document.getElementById('noteSaveBtn').addEventListener('click', function(){
+      var title = document.getElementById('noteTitleInput').value.trim();
+      var body = document.getElementById('noteBodyInput').value;
+      var tagsRaw = document.getElementById('noteTagsInput').value;
+      var tags = tagsRaw.split(',').map(function(t){ return t.trim(); }).filter(Boolean);
+      if(!title && !body){ showToast('Напишите что-нибудь перед сохранением.'); return; }
+      upsertNote(state.editingNoteId, { title: title || 'Без названия', body: body, tags: tags });
+      closeNoteEditor();
+      renderNotes();
+      showToast('Заметка сохранена');
+    });
+    document.getElementById('noteSearch').addEventListener('input', function(e){ state.search = e.target.value; renderNotes(); });
+
+    document.getElementById('newRemBtn').addEventListener('click', function(){
+      var card = document.getElementById('newRemCard');
+      card.classList.toggle('show');
+      if(card.classList.contains('show')){ document.getElementById('remDate').value = todayStr(); document.getElementById('remTitle').focus(); }
+    });
+    document.getElementById('remCancelBtn').addEventListener('click', function(){
+      document.getElementById('newRemCard').classList.remove('show');
+    });
+    document.getElementById('remSaveBtn').addEventListener('click', function(){
+      var title = document.getElementById('remTitle').value.trim();
+      var date = document.getElementById('remDate').value || todayStr();
+      var time = document.getElementById('remTime').value || '09:00';
+      var priority = document.getElementById('remPriority').value;
+      var repeat = document.getElementById('remRepeat').value;
+      var notes = document.getElementById('remNotes').value.trim();
+      if(!title){ showToast('Введите название напоминания.'); return; }
+      addReminder({ title:title, date:date, time:time, priority:priority, repeat:repeat, notes:notes });
+      document.getElementById('remTitle').value='';
+      document.getElementById('remNotes').value='';
+      document.getElementById('newRemCard').classList.remove('show');
+      renderReminders();
+      renderCalendar();
+      showToast('Напоминание добавлено');
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', function(){
+      if(confirm('Удалить все заметки и напоминания? Это действие нельзя отменить.')){
+        state.dayNotes = {}; state.notes = []; state.reminders = [];
+        saveKey(STORAGE_KEYS.dayNotes, {});
+        saveKey(STORAGE_KEYS.notes, []);
+        saveKey(STORAGE_KEYS.reminders, []);
+        closeNoteEditor();
+        closeDayPanel();
+        render();
+        showToast('Все данные удалены');
+      }
+    });
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
